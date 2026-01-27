@@ -1,0 +1,7 @@
+{
+  "name": "MERAKI 3D - Filament Control",
+  "description": "A comprehensive 3D printing filament management system with inventory tracking, cost analysis, and usage reports for MERAKI 3D.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
