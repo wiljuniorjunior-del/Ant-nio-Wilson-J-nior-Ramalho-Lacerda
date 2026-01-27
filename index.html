@@ -57,8 +57,19 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('SW Registered', reg))
-                    .catch(err => console.log('SW Failed', err));
+                    .then(reg => {
+                        console.log('MERAKI 3D: Service Worker ativo!');
+                        // Verifica se há atualizações no SW
+                        reg.onupdatefound = () => {
+                            const installingWorker = reg.installing;
+                            installingWorker.onstatechange = () => {
+                                if (installingWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    console.log('Nova versão disponível! Recarregue a página.');
+                                }
+                            };
+                        };
+                    })
+                    .catch(err => console.log('SW Erro:', err));
             });
         }
     </script>

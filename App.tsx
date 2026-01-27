@@ -6,6 +6,7 @@ import { syncService } from './services/syncService';
 import { COLORS, LogoRhombus, INITIAL_SETTINGS } from './constants';
 import { FilamentCard } from './components/FilamentCard';
 import { StatsDashboard } from './components/StatsDashboard';
+import { ApkGuideModal } from './components/ApkGuideModal';
 import { generateInventoryPDF } from './services/pdfExport';
 import { generateInventoryExcel } from './services/excelExport';
 
@@ -18,11 +19,13 @@ const App: React.FC = () => {
   const [syncLoading, setSyncLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(false);
   const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [copySuccess, setCopySuccess] = useState(false);
   
   // UI States
   const [showFilamentModal, setShowFilamentModal] = useState(false);
   const [showJobModal, setShowJobModal] = useState(false);
   const [showWeighModal, setShowWeighModal] = useState(false);
+  const [showApkGuide, setShowApkGuide] = useState(false);
   const [editingFilament, setEditingFilament] = useState<Filament | null>(null);
   const [targetFilament, setTargetFilament] = useState<Filament | null>(null);
 
@@ -37,12 +40,10 @@ const App: React.FC = () => {
     };
     setSettings(finalSettings);
     
-    // Check initial connection
     if (finalSettings.apiConfig.baseUrl) {
       syncService.testConnection(finalSettings.apiConfig).then(setIsOnline);
     }
 
-    // PWA Install Prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       setInstallPrompt(e);
@@ -57,6 +58,38 @@ const App: React.FC = () => {
           setInstallPrompt(null);
         }
       });
+    }
+  };
+
+  const handleCopyLink = () => {
+    try {
+      navigator.clipboard.writeText(window.location.href);
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 2000);
+    } catch (err) {
+      console.error('Falha ao copiar link:', err);
+    }
+  };
+
+  const handleShare = async () => {
+    const shareUrl = window.location.href;
+    const canShare = navigator.share && shareUrl.startsWith('http');
+
+    if (canShare) {
+      try {
+        await navigator.share({
+          title: 'MERAKI 3D - Gestão de Filamentos',
+          text: 'Acesse o sistema de controle de estoque da Meraki 3D.',
+          url: shareUrl,
+        });
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          console.error('Erro ao compartilhar:', err);
+          handleCopyLink();
+        }
+      }
+    } else {
+      handleCopyLink();
     }
   };
 
@@ -132,7 +165,6 @@ const App: React.FC = () => {
     ).sort((a, b) => a.id.localeCompare(b.id));
   }, [filaments, searchQuery]);
 
-  // Handlers
   const handleSaveFilament = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -250,7 +282,6 @@ const App: React.FC = () => {
 
   return (
     <div className={`min-h-screen pb-24 ${settings.darkMode ? 'bg-zinc-900 text-zinc-100' : 'bg-zinc-50 text-zinc-900'}`}>
-      {/* Header */}
       <header className={`sticky top-0 z-40 px-4 py-3 border-b shadow-sm backdrop-blur-md ${settings.darkMode ? 'bg-zinc-900/80 border-zinc-800' : 'bg-white/80 border-zinc-200'}`}>
         <div className="flex items-center justify-between max-w-5xl mx-auto">
           <div className="flex items-center gap-3">
@@ -284,7 +315,6 @@ const App: React.FC = () => {
       <main className="max-w-5xl mx-auto px-4 py-6">
         {activeView === 'inventory' && (
           <div className="space-y-6 animate-in fade-in duration-500">
-            {/* Search & Stats Preview */}
             <div className="flex flex-col md:flex-row gap-4">
               <div className="relative flex-1">
                 <input 
@@ -309,7 +339,6 @@ const App: React.FC = () => {
               </div>
             </div>
 
-            {/* Grid */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFilaments.length > 0 ? (
                 filteredFilaments.map(filament => (
@@ -384,16 +413,56 @@ const App: React.FC = () => {
               <h2 className="text-xl font-bold">Configurações</h2>
               
               <div className={`p-6 rounded-2xl border space-y-6 ${settings.darkMode ? 'bg-zinc-800 border-zinc-700' : 'bg-white border-zinc-100'}`}>
-                 {/* Install App UI */}
-                 {installPrompt && (
-                   <div className="p-4 rounded-2xl bg-[#1A9B9F22] border border-[#1A9B9F] flex items-center justify-between">
-                     <div>
-                       <h4 className="text-sm font-bold text-[#1A9B9F]">Instalar App Android</h4>
-                       <p className="text-[10px] opacity-60">Acesse offline e direto da tela inicial</p>
-                     </div>
-                     <button onClick={handleInstall} className="px-4 py-2 rounded-xl bg-[#1A9B9F] text-white text-xs font-bold shadow-sm">Instalar</button>
-                   </div>
-                 )}
+                 
+                 <div className="space-y-4">
+                    <h3 className="text-sm font-bold uppercase tracking-wider opacity-60">Link e Instalação</h3>
+                    
+                    <div className="p-4 rounded-2xl bg-zinc-50 dark:bg-zinc-700/50 border border-zinc-100 dark:border-zinc-700">
+                        <label className="block text-[10px] font-bold opacity-60 uppercase mb-2">Endereço do seu App (Link)</label>
+                        <div className="flex items-center gap-2 mb-4">
+                            <input 
+                                readOnly
+                                value={window.location.href}
+                                className={`flex-1 p-2 text-[10px] rounded-lg border font-mono truncate ${settings.darkMode ? 'bg-zinc-800 border-zinc-600' : 'bg-white'}`}
+                            />
+                            <button 
+                                onClick={handleCopyLink}
+                                className={`p-2 rounded-lg border flex items-center gap-2 text-[10px] font-bold transition-all ${copySuccess ? 'bg-emerald-500 text-white border-emerald-500' : 'bg-[#1A9B9F] text-white border-[#1A9B9F]'}`}
+                            >
+                                {copySuccess ? 'COPIADO!' : 'COPIAR'}
+                            </button>
+                        </div>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex gap-2">
+                                <button 
+                                    onClick={handleShare}
+                                    className="flex-1 py-3 rounded-xl border border-[#1A9B9F] text-[#1A9B9F] font-bold text-xs flex items-center justify-center gap-2"
+                                >
+                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 100-2.684 3 3 0 000 2.684zm0 9.316a3 3 0 100-2.684 3 3 0 000 2.684z" /></svg>
+                                    Compartilhar App
+                                </button>
+                                {installPrompt && (
+                                    <button 
+                                        onClick={handleInstall}
+                                        className="flex-1 py-3 rounded-xl bg-[#1A9B9F] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                        Instalar App
+                                    </button>
+                                )}
+                            </div>
+                            <button 
+                                onClick={() => setShowApkGuide(true)}
+                                className="w-full py-3 rounded-xl bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900 font-bold text-xs flex items-center justify-center gap-2 shadow-sm"
+                            >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>
+                                Gerar Arquivo APK (Android)
+                            </button>
+                        </div>
+                    </div>
+                 </div>
+
+                 <hr className="opacity-10" />
 
                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -421,7 +490,6 @@ const App: React.FC = () => {
 
                  <hr className="opacity-10" />
 
-                 {/* API Integration Card */}
                  <div className="space-y-4">
                     <h3 className="text-sm font-bold uppercase tracking-wider opacity-60">Integração com o Site</h3>
                     <div className="space-y-3">
@@ -510,7 +578,7 @@ const App: React.FC = () => {
                       Relatório em PDF
                     </button>
                     <button onClick={handleExportExcel} className="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold text-sm shadow-md hover:brightness-110 flex items-center justify-center gap-2">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 0h6" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 3v11m0 0l-3-3m3 3l3-3" /></svg>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 17v-2a2 2 0 012-2h2a2 2 0 012 2v2m-6 0h6" /></svg>
                       Planilha em Excel
                     </button>
                     <button onClick={() => { localStorage.clear(); window.location.reload(); }} className="w-full py-3 rounded-xl border border-red-200 text-red-500 font-bold text-sm opacity-60">Resetar Sistema</button>
@@ -520,7 +588,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Floating Action Button */}
       <button 
         onClick={() => { setEditingFilament(null); setShowFilamentModal(true); }}
         className="fixed bottom-24 right-6 w-14 h-14 rounded-full bg-[#1A9B9F] text-white shadow-xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-40"
@@ -528,7 +595,6 @@ const App: React.FC = () => {
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4" /></svg>
       </button>
 
-      {/* Bottom Navigation */}
       <nav className={`fixed bottom-0 inset-x-0 z-50 px-4 py-2 border-t backdrop-blur-lg ${settings.darkMode ? 'bg-zinc-900/90 border-zinc-800' : 'bg-white/90 border-zinc-200'}`}>
         <div className="flex justify-around max-w-xl mx-auto">
           {[
@@ -549,7 +615,15 @@ const App: React.FC = () => {
         </div>
       </nav>
 
-      {/* MODAL: Filament Add/Edit */}
+      {/* Modais */}
+      {showApkGuide && (
+        <ApkGuideModal 
+          darkMode={settings.darkMode} 
+          onClose={() => setShowApkGuide(false)} 
+          appUrl={window.location.href} 
+        />
+      )}
+
       {showFilamentModal && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className={`w-full max-w-lg rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 ${settings.darkMode ? 'bg-zinc-800' : 'bg-white'}`}>
@@ -614,7 +688,6 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* MODAL: Register Usage */}
       {showJobModal && targetFilament && (
          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className={`w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 ${settings.darkMode ? 'bg-zinc-800' : 'bg-white'}`}>
@@ -642,7 +715,6 @@ const App: React.FC = () => {
          </div>
       )}
 
-      {/* MODAL: Adjust Weight */}
       {showWeighModal && targetFilament && (
          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className={`w-full max-w-md rounded-3xl p-6 shadow-2xl animate-in zoom-in-95 duration-300 ${settings.darkMode ? 'bg-zinc-800' : 'bg-white'}`}>

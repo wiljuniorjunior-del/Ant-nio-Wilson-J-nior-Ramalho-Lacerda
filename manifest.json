@@ -1,25 +1,162 @@
-
 {
-  "name": "MERAKI 3D - Gestão",
+  "id": "meraki3d-filament-control",
+  "name": "MERAKI 3D - Gestão de Filamentos",
   "short_name": "Meraki3D",
-  "description": "Controle de Estoque de Filamentos 3D",
+  "description": "Sistema profissional de controle de estoque para impressão 3D. Rastreie consumo em gramas, gerencie custos e monitore níveis de estoque com precisão.",
+  "lang": "pt-BR",
+  "dir": "ltr",
   "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "display_override": [
+    "window-controls-overlay",
+    "tabbed",
+    "minimal-ui",
+    "standalone"
+  ],
   "background_color": "#E0F7F7",
   "theme_color": "#1A9B9F",
   "orientation": "portrait",
+  "categories": [
+    "productivity",
+    "utilities",
+    "business"
+  ],
+  "iarc_rating_id": "e57c6317-7489-408a-b86e-b153866d9990",
+  "scope_extensions": [
+    {
+      "origin": "https://*.meraki3d.com"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Novo Filamento",
+      "short_name": "Adicionar",
+      "description": "Cadastrar um novo rolo de filamento no sistema",
+      "url": "./index.html?action=add-filament",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Ver Estatísticas",
+      "short_name": "Stats",
+      "description": "Visualizar gráficos de consumo e investimento",
+      "url": "./index.html?view=statistics",
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "file_handlers": [
+    {
+      "action": "./index.html",
+      "name": "Planilhas de Filamento",
+      "accept": {
+        "text/csv": [
+          ".csv"
+        ],
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+          ".xlsx"
+        ]
+      }
+    }
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "protocol_handlers": [
+    {
+      "protocol": "web+meraki3d",
+      "url": "./index.html?uri=%s"
+    }
+  ],
+  "share_target": {
+    "action": "./index.html",
+    "method": "GET",
+    "params": {
+      "title": "share_title",
+      "text": "share_text",
+      "url": "share_url"
+    }
+  },
+  "note_taking": {
+    "new_note_url": "./index.html?action=add-filament"
+  },
+  "widgets": [
+    {
+      "name": "Resumo de Estoque",
+      "short_name": "Estoque",
+      "description": "Veja o saldo total de filamentos rapidamente.",
+      "tag": "stock-summary",
+      "template": "stock-summary-template",
+      "ms_ac_template": "stock-summary-ac-template.json",
+      "data": "stock-summary-data.json",
+      "type": "application/json",
+      "screenshots": [
+        {
+          "src": "https://placehold.co/600x400/1A9B9F/FFFFFF?text=Widget+Preview",
+          "sizes": "600x400",
+          "type": "image/png"
+        }
+      ],
+      "icons": [
+        {
+          "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
   "icons": [
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
     },
     {
       "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/3569/3569998.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "https://placehold.co/1080x1920/1A9B9F/FFFFFF?text=Meraki3D+Inventory",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Visão Geral do Estoque"
+    },
+    {
+      "src": "https://placehold.co/1920x1080/0D4F52/FFFFFF?text=Meraki3D+Dashboard",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "Estatísticas de Consumo"
     }
   ]
 }
